@@ -10,5 +10,14 @@ export const GraphState = Annotation.Root({
     default: () => null,
   }),
 
+  approval_required_payload: Annotation<{
+    title: string;
+    question: string;
+    options: string[];
+    metadata: Record<string, any>;
+  }>(),
+
   generatedSqlQuery: Annotation<string>(),
+
+  humanApproved: Annotation<boolean>(),
 });

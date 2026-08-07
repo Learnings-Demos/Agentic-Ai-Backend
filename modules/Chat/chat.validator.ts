@@ -12,3 +12,11 @@ export const validateUpdateThreadPayload = [
   body("title").optional().isString().withMessage("Title must be a string"),
   body("status").optional().isString().withMessage("Status must be a string"),
 ];
+
+export const validateHumanApproval = [
+  body("user_response")
+    .exists({ checkFalsy: true })
+    .withMessage("user_response is required")
+    .isIn(["Approve", "Reject"])
+    .withMessage("user_response must be either 'Approve' or 'Reject'"),
+];

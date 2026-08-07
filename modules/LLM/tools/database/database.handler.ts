@@ -1,4 +1,5 @@
 import { DatabaseServices } from "../../../../utils/enums";
+import { withTrace } from "../../LLM.helpers";
 import { serviceRegistry } from "../../registries";
 import { DatabaseInput } from "./database.schema";
 
@@ -23,7 +24,7 @@ export const databaseToolHandler = async ({
     throw new Error(`Unknown service: ${service}`);
   }
 
-  const serviceOperation = registry[operation as keyof typeof registry];
+  const serviceOperation = registry.operations[operation];
 
   if (!serviceOperation) {
     throw new Error(

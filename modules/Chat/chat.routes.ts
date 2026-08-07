@@ -4,6 +4,7 @@ import {
   validateParamThreadId,
   validateUpdateThreadPayload,
   validateQuery,
+  validateHumanApproval,
 } from "./chat.validator";
 import { validateRequest } from "../../middlewares/validate";
 
@@ -54,6 +55,17 @@ app.delete(
   validateParamThreadId,
   validateRequest,
   ChatController.deleteChat
+);
+
+/* -------------------------------------------------------------------------- */
+/*                               Thread Approval                              */
+/* -------------------------------------------------------------------------- */
+app.post(
+  "/:threadId/approval",
+  validateParamThreadId,
+  validateHumanApproval,
+  validateRequest,
+  ChatController.approveThread
 );
 
 export default app;

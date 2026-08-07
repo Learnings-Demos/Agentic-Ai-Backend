@@ -1,6 +1,7 @@
 import { HttpStatusCode } from "axios";
 import { Request, Response } from "express";
 import { HumanMessage } from "@langchain/core/messages";
+import { Command } from "@langchain/langgraph";
 import { generateUUID, SendResponse } from "../../utils/helpers";
 import { ThreadStatus } from "../../utils/enums";
 import * as ChatService from "./chat.service";
@@ -105,7 +106,7 @@ export const chat = async (req: Request, res: Response) => {
     }
 
     /* Invoke Graph */
-    const response = await rootGraph.invoke(
+    const response: any = await rootGraph.invoke(
       { messages: [new HumanMessage(query)] },
       {
         configurable: {
@@ -113,6 +114,19 @@ export const chat = async (req: Request, res: Response) => {
         },
       }
     );
+
+    /* If response is interrupted by HITL */
+    if (response?.__interrupt__) {
+      return SendResponse({
+        res,
+        status: HttpStatusCode.Ok,
+        message: "Approval Required",
+        data: {
+          thread_id: threadId,
+          approval_required: response.__interrupt__,
+        },
+      });
+    }
 
     /* For Testing */
     const lastMessage = response.messages.at(-1);
@@ -240,6 +254,62 @@ export const deleteChat = async (req: any, res: Response) => {
       data: null,
       status: HttpStatusCode.Ok,
       message: "Chat Deleted",
+    });
+  } catch (error: any) {
+    return SendResponse({
+      res,
+      status: HttpStatusCode.InternalServerError,
+      message: "Error: " + error.message,
+    });
+  }
+};
+
+/* -------------------------------------------------------------------------- */
+/*                               Thread Approve                               */
+/* -------------------------------------------------------------------------- */
+export const approveThread = async (req: any, res: Response) => {
+  try {
+    /* Parse Request */
+    const { threadId } = req.params;
+    const { user_response } = req.body;
+
+    /* Resume Graph With Human Approval Decision */
+    const result: any = await rootGraph.invoke(
+      new Command({
+        resume: {
+          approved: user_response.toLowerCase() === "approve",
+        },
+      }),
+      {
+        configurable: {
+          thread_id: threadId,
+        },
+      }
+    );
+
+    /* If response is interrupted again by HITL */
+    if (result?.__interrupt__) {
+      return SendResponse({
+        res,
+        status: HttpStatusCode.Ok,
+        message: "Approval Required",
+        data: {
+          thread_id: threadId,
+          approval_required: result.__interrupt__,
+        },
+      });
+    }
+
+    const lastMessage = result.messages.at(-1);
+
+    return SendResponse({
+      res,
+      data: {
+        thread_id: threadId,
+        answer: lastMessage?.content,
+      },
+      status: HttpStatusCode.Ok,
+      message: "Response Approved",
     });
   } catch (error: any) {
     return SendResponse({

@@ -1,16 +1,26 @@
 import { END, START, StateGraph } from "@langchain/langgraph";
 import { GraphState } from "../../../graphs/state";
 import path from "path";
-import { generateFinalizeResponse, visualizeGraph } from "../../../LLM.helpers";
-import { checkpointer } from "../../../config/checkpointer";
 import {
   emptyNode,
+  generateFinalizeResponse,
+  visualizeGraph,
+} from "../../../LLM.helpers";
+import { checkpointer } from "../../../config/checkpointer";
+import {
+  checkIfSQLOrServiceExecution,
   executeServiceNode,
   executeSqlQueryNode,
   generateSqlQueryNode,
+  handleHumanResponseOfInterruption,
+  handleHumanResponseRouter,
+  handleRejectionNode,
   parseUserQueryNode,
+  prepareDatabaseServiceMetadataNode,
+  prepareSqlMetadataNode,
   queryServiceDecisionRouter,
 } from "./database.nodes";
+import { humanApprovalGraph } from "../../../graphs/HITL/HITL.graph";
 
 export const databaseGraphObject = new StateGraph(GraphState)
   /* -------------------------------------------------------------------------- */
@@ -28,6 +38,15 @@ export const databaseGraphObject = new StateGraph(GraphState)
   .addNode("Execute-SQL", executeSqlQueryNode)
   .addNode("Execute-Service", executeServiceNode)
   .addNode("Generate-Final-Response", generateFinalizeResponse)
+  .addNode("Interrupt", humanApprovalGraph)
+  .addNode("Handle-Human-Response", handleHumanResponseOfInterruption)
+  .addNode("Handle-Rejection", handleRejectionNode)
+  .addNode("Prepare-SQL-Metadata", prepareSqlMetadataNode)
+  .addNode(
+    "Prepare-Database-Service-Metadata",
+    prepareDatabaseServiceMetadataNode
+  )
+  .addNode("Check-Approved-Type", emptyNode)
 
   /* -------------------------------------------------------------------------- */
   /*                              Edges Defination                              */
@@ -36,13 +55,35 @@ export const databaseGraphObject = new StateGraph(GraphState)
 
   .addConditionalEdges("Parse-User-Query", queryServiceDecisionRouter, {
     end: END,
-    execute_service: "Execute-Service",
     generate_sql: "Generate-SQL",
+    execute_service: "Prepare-Database-Service-Metadata",
   })
 
-  .addEdge("Generate-SQL", "Execute-SQL")
+  .addEdge("Generate-SQL", "Prepare-SQL-Metadata")
+
+  .addEdge("Prepare-SQL-Metadata", "Interrupt")
+  .addEdge("Prepare-Database-Service-Metadata", "Interrupt")
+
+  .addEdge("Interrupt", "Handle-Human-Response")
+
+  .addConditionalEdges(
+    "Handle-Human-Response",
+    handleHumanResponseRouter,
+    {
+      approved: "Check-Approved-Type",
+      rejected: "Handle-Rejection",
+    }
+  )
+
+  .addConditionalEdges("Check-Approved-Type", checkIfSQLOrServiceExecution, {
+    execute_sql: "Execute-SQL",
+    execute_service: "Execute-Service",
+  })
+
   .addEdge("Execute-SQL", "Generate-Final-Response")
   .addEdge("Execute-Service", "Generate-Final-Response")
+  .addEdge("Handle-Rejection", "Generate-Final-Response")
+
   .addEdge("Generate-Final-Response", END);
 
 export const databaseGraph = databaseGraphObject.compile({
