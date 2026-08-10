@@ -22,6 +22,18 @@ set sendEmail=true.
 
 Do NOT call email separately for sending an invoice that is
 being created by this tool.`,
-  database:
-    "Perform database operations by invoking existing business services or executing approved SQL queries for analytical requests.",
+  database: `
+    "Use this tool ONLY for READ operations.
+
+Allowed Examples:
+- getAllUsers
+- getUserById
+- getUserByEmail
+
+NOT allowed:
+- delete, update, insert
+
+If user asks for data modification:
+→ DO NOT use this tool
+→ fallback to SQL generation`,
 };

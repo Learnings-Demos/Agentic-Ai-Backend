@@ -1,5 +1,4 @@
 import { DatabaseServices } from "../../../../utils/enums";
-import { withTrace } from "../../LLM.helpers";
 import { serviceRegistry } from "../../registries";
 import { DatabaseInput } from "./database.schema";
 

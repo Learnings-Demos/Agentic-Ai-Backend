@@ -23,6 +23,20 @@ Rules:
 - Never change column names.
 - Use only tables and columns that exist in the provided schema.
 - Every identifier in SELECT, FROM, JOIN, WHERE, GROUP BY, HAVING, ORDER BY, INSERT, UPDATE, DELETE and RETURNING clauses must use the exact quoted identifier from the schema.
+
+🚨 CRITICAL SAFETY RULES:
+
+1. ONLY generate READ queries (SELECT)
+2. NEVER generate:
+   - DELETE
+   - UPDATE
+   - INSERT
+   - DROP
+   - ALTER
+
+3. If user asks for modification:
+   → DO NOT generate SQL
+   → Return: "Operation not allowed"
 `,
   ],
 

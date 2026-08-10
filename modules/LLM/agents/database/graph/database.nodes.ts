@@ -1,4 +1,4 @@
-import { AIMessageChunk } from "@langchain/core/messages";
+import { AIMessage, AIMessageChunk } from "@langchain/core/messages";
 import { GraphState } from "../../../graphs/state";
 import {
   databaseAgent,
@@ -7,11 +7,15 @@ import {
 } from "../database.agent";
 import { databaseTool } from "../../../tools/database/database.tool";
 import { DatabaseServices } from "../../../../../utils/enums";
-import { executeRawQuery } from "../../../tools/database/database.service";
+import {
+  executeRawQuery,
+  forbiddenOperations,
+} from "../../../tools/database/database.service";
 import { generateSqlQueryChain } from "../../../pipelines/generate-sql-query/generate-sql-query.chain";
 import {
   appendAiMessageToState,
   createToolMessageAndAppendToState,
+  withTrace,
 } from "../../../LLM.helpers";
 
 /* -------------------------------------------------------------------------- */
@@ -194,6 +198,17 @@ export const handleRejectionNode = (state: typeof GraphState.State) => {
 };
 
 /* -------------------------------------------------------------------------- */
+/*                         Handle Forbidden Operation                         */
+/* -------------------------------------------------------------------------- */
+export const handleForbiddenNode = (state: typeof GraphState.State) => {
+  const rejectionMessage = new AIMessage(
+    "This operation is not allowed. Only read operations are permitted."
+  );
+
+  return appendAiMessageToState(rejectionMessage);
+};
+
+/* -------------------------------------------------------------------------- */
 /*                 Query Service Decision ( Conditional Func )                */
 /* -------------------------------------------------------------------------- */
 export const queryServiceDecisionRouter = async (
@@ -222,9 +237,17 @@ export const queryServiceDecisionRouter = async (
 
   // Check service in tool args
   const service = databaseTool?.args?.service;
+  const operation = databaseTool?.args?.operation;
 
   if (!service) {
     return "end";
+  }
+
+  if (
+    service === DatabaseServices.FORBIDDEN_SERVICE ||
+    operation === "forbidden_operation"
+  ) {
+    return "forbidden_service";
   }
 
   if (service === DatabaseServices.OTHER_SERVICE) {
@@ -253,4 +276,19 @@ export const checkIfSQLOrServiceExecution = (
 /* -------------------------------------------------------------------------- */
 export const handleHumanResponseRouter = (state: typeof GraphState.State) => {
   return state.humanApproved ? "approved" : "rejected";
+};
+
+/* -------------------------------------------------------------------------- */
+/*     Check if Generated SQL has Forbidden Operation ( Conditional Func )    */
+/* -------------------------------------------------------------------------- */
+export const checkIfForbiddenOperation = (state: typeof GraphState.State) => {
+  const hasForbiddenOperation = forbiddenOperations.some((op) =>
+    state.generatedSqlQuery.toLowerCase().includes(op)
+  );
+
+  if (hasForbiddenOperation) {
+    return "forbidden_service";
+  }
+
+  return "approved";
 };

@@ -12,4 +12,5 @@ export enum Role {
 export enum DatabaseServices {
   USER_SERVICE = "user_service",
   OTHER_SERVICE = "other_service",
+  FORBIDDEN_SERVICE = "forbidden_service",
 }

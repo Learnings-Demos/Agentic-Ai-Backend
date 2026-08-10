@@ -26,16 +26,20 @@ export const visualizeGraph = async (
   graph: any,
   currentPath?: string | null
 ) => {
-  const png = await graph
-    .getGraph({
-      xray: true,
-    })
-    .drawMermaidPng();
+  try {
+    const png = await graph
+      .getGraph({
+        xray: true,
+      })
+      .drawMermaidPng();
 
-  fs.writeFileSync(
-    currentPath ? currentPath : path.join(__dirname, "graph.png"),
-    new Uint8Array(await png.arrayBuffer())
-  );
+    fs.writeFileSync(
+      currentPath ? currentPath : path.join(__dirname, "graph.png"),
+      new Uint8Array(await png.arrayBuffer())
+    );
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 /* -------------------------------------------------------------------------- */

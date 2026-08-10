@@ -8,10 +8,12 @@ import {
 } from "../../../LLM.helpers";
 import { checkpointer } from "../../../config/checkpointer";
 import {
+  checkIfForbiddenOperation,
   checkIfSQLOrServiceExecution,
   executeServiceNode,
   executeSqlQueryNode,
   generateSqlQueryNode,
+  handleForbiddenNode,
   handleHumanResponseOfInterruption,
   handleHumanResponseRouter,
   handleRejectionNode,
@@ -41,6 +43,7 @@ export const databaseGraphObject = new StateGraph(GraphState)
   .addNode("Interrupt", humanApprovalGraph)
   .addNode("Handle-Human-Response", handleHumanResponseOfInterruption)
   .addNode("Handle-Rejection", handleRejectionNode)
+  .addNode("Handle-Forbidden-Operation", handleForbiddenNode)
   .addNode("Prepare-SQL-Metadata", prepareSqlMetadataNode)
   .addNode(
     "Prepare-Database-Service-Metadata",
@@ -57,6 +60,7 @@ export const databaseGraphObject = new StateGraph(GraphState)
     end: END,
     generate_sql: "Generate-SQL",
     execute_service: "Prepare-Database-Service-Metadata",
+    forbidden_service: "Handle-Forbidden-Operation",
   })
 
   .addEdge("Generate-SQL", "Prepare-SQL-Metadata")
@@ -66,14 +70,10 @@ export const databaseGraphObject = new StateGraph(GraphState)
 
   .addEdge("Interrupt", "Handle-Human-Response")
 
-  .addConditionalEdges(
-    "Handle-Human-Response",
-    handleHumanResponseRouter,
-    {
-      approved: "Check-Approved-Type",
-      rejected: "Handle-Rejection",
-    }
-  )
+  .addConditionalEdges("Handle-Human-Response", handleHumanResponseRouter, {
+    approved: "Check-Approved-Type",
+    rejected: "Handle-Rejection",
+  })
 
   .addConditionalEdges("Check-Approved-Type", checkIfSQLOrServiceExecution, {
     execute_sql: "Execute-SQL",
@@ -83,6 +83,7 @@ export const databaseGraphObject = new StateGraph(GraphState)
   .addEdge("Execute-SQL", "Generate-Final-Response")
   .addEdge("Execute-Service", "Generate-Final-Response")
   .addEdge("Handle-Rejection", "Generate-Final-Response")
+  .addEdge("Handle-Forbidden-Operation", END)
 
   .addEdge("Generate-Final-Response", END);
 

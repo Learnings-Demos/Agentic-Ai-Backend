@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { DatabaseServices } from "../../../../utils/enums";
+import { allOperations } from "../../registries";
 
 export const databaseToolSchema = z.object({
   service: z.enum(DatabaseServices),
-  operation: z.string().describe("Database operation to execute."),
+  operation: z.enum(allOperations),
   payload: z.any().optional(),
 });
 
