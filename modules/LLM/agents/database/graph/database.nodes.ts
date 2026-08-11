@@ -7,16 +7,13 @@ import {
 } from "../database.agent";
 import { databaseTool } from "../../../tools/database/database.tool";
 import { DatabaseServices } from "../../../../../utils/enums";
-import {
-  executeRawQuery,
-  forbiddenOperations,
-} from "../../../tools/database/database.service";
+import { executeRawQuery } from "../../../tools/database/database.service";
 import { generateSqlQueryChain } from "../../../pipelines/generate-sql-query/generate-sql-query.chain";
 import {
   appendAiMessageToState,
   createToolMessageAndAppendToState,
-  withTrace,
 } from "../../../LLM.helpers";
+import { withHITL } from "../../../tools/tools.policy";
 
 /* -------------------------------------------------------------------------- */
 /*                            Parse User Query Node                           */
@@ -62,7 +59,18 @@ export const generateSqlQueryNode = async (state: typeof GraphState.State) => {
 /*                           Execute Sql Query Node                           */
 /* -------------------------------------------------------------------------- */
 export const executeSqlQueryNode = async (state: typeof GraphState.State) => {
-  const result = await executeRawQuery(state.generatedSqlQuery);
+  const toolCall = {
+    name: "database",
+    args: {
+      query: state.generatedSqlQuery,
+    },
+  };
+
+  const executeSQLQuery = withHITL(async (toolCall: any) => {
+    return await executeRawQuery(toolCall.args.query);
+  });
+
+  const result = await executeSQLQuery(toolCall);
 
   return createToolMessageAndAppendToState({
     tool_call_id: "generate_sql",
@@ -92,7 +100,11 @@ export const executeServiceNode = async (state: typeof GraphState.State) => {
   }
 
   // Execute database tool
-  const result = await databaseTool.invoke(toolCall.args as any);
+  const executeDatabaseService = withHITL(async (toolCall: any) => {
+    return await databaseTool.invoke(toolCall.args as any);
+  });
+
+  const result = await executeDatabaseService(toolCall);
 
   // Create Tool Message to append in state
   return createToolMessageAndAppendToState({
@@ -100,100 +112,6 @@ export const executeServiceNode = async (state: typeof GraphState.State) => {
       typeof result === "object" ? JSON.stringify(result) : String(result),
     tool_call_id: toolCall.id!,
     name: toolCall.name,
-  });
-};
-
-/* -------------------------------------------------------------------------- */
-/*                        Prepare SQL Metadata for HITL                       */
-/* -------------------------------------------------------------------------- */
-export const prepareSqlMetadataNode = async (
-  state: typeof GraphState.State
-) => {
-  const payload = {
-    title: "Database Permission",
-    question: "Do you want this SQL query to execute ?",
-    options: ["Approve", "Reject"],
-    metadata: {
-      type: "sql",
-      sql_query: state.generatedSqlQuery,
-    },
-  };
-
-  return {
-    approval_required_payload: payload,
-  };
-};
-
-/* -------------------------------------------------------------------------- */
-/*                 Prepare Database Service Metadata for HITL                 */
-/* -------------------------------------------------------------------------- */
-export const prepareDatabaseServiceMetadataNode = async (
-  state: typeof GraphState.State
-) => {
-  const lastMessage = state.messages.at(-1);
-
-  if (!(lastMessage instanceof AIMessageChunk)) {
-    return {};
-  }
-
-  const toolCall = lastMessage.tool_calls?.find(
-    (tool) => tool.name === "database"
-  );
-
-  if (!toolCall) {
-    return {};
-  }
-
-  const payload = {
-    title: "Database Permission",
-    question: "Do you want this service to execute ?",
-    options: ["Approve", "Reject"],
-    metadata: {
-      type: "service",
-      service: toolCall?.args.service,
-      operation: toolCall?.args.operation,
-    },
-  };
-
-  return {
-    approval_required_payload: payload,
-  };
-};
-
-/* -------------------------------------------------------------------------- */
-/*                    Handle Human Response of Interruption                   */
-/* -------------------------------------------------------------------------- */
-export const handleHumanResponseOfInterruption = (
-  state: typeof GraphState.State
-) => {
-  return {
-    humanApproved: state.humanApproved,
-  };
-};
-
-/* -------------------------------------------------------------------------- */
-/*                       Handle Human Rejection Node                          */
-/* -------------------------------------------------------------------------- */
-export const handleRejectionNode = (state: typeof GraphState.State) => {
-  const lastMessage = state.messages.at(-1);
-
-  if (!(lastMessage instanceof AIMessageChunk)) {
-    return {};
-  }
-
-  const toolCall = lastMessage.tool_calls?.find(
-    (tool) => tool.name === "database"
-  );
-
-  if (!toolCall) {
-    return {};
-  }
-
-  return createToolMessageAndAppendToState({
-    tool_call_id: toolCall.id!,
-    name: toolCall.name,
-    content:
-      "The user rejected this action. It was not executed. Do not attempt it again.",
   });
 };
 
@@ -255,40 +173,4 @@ export const queryServiceDecisionRouter = async (
   }
 
   return "execute_service";
-};
-
-/* -------------------------------------------------------------------------- */
-/*         Check If SQL or Service to be executed ( Conditional Func )        */
-/* -------------------------------------------------------------------------- */
-export const checkIfSQLOrServiceExecution = (
-  state: typeof GraphState.State
-) => {
-  const type = state.approval_required_payload?.metadata?.type;
-
-  if (type === "sql") return "execute_sql";
-  if (type === "service") return "execute_service";
-
-  throw new Error("Unknown execution type");
-};
-
-/* -------------------------------------------------------------------------- */
-/*              Handle Human Response Router ( Conditional Func )             */
-/* -------------------------------------------------------------------------- */
-export const handleHumanResponseRouter = (state: typeof GraphState.State) => {
-  return state.humanApproved ? "approved" : "rejected";
-};
-
-/* -------------------------------------------------------------------------- */
-/*     Check if Generated SQL has Forbidden Operation ( Conditional Func )    */
-/* -------------------------------------------------------------------------- */
-export const checkIfForbiddenOperation = (state: typeof GraphState.State) => {
-  const hasForbiddenOperation = forbiddenOperations.some((op) =>
-    state.generatedSqlQuery.toLowerCase().includes(op)
-  );
-
-  if (hasForbiddenOperation) {
-    return "forbidden_service";
-  }
-
-  return "approved";
 };

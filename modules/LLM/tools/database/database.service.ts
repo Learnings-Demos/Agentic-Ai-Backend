@@ -1,6 +1,6 @@
 import sequelize from "../../../../config/database";
 
-export const forbiddenOperations = ["delete", "update", "insert", "drop", "alter"];
+const forbiddenOperations = ["delete", "update", "insert", "drop", "alter"];
 
 export const executeRawQuery = async (query: string) => {
   try {
