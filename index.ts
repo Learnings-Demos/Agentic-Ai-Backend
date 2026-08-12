@@ -6,6 +6,7 @@ import UserRoutes from "./modules/User/user.routes";
 import ChatRoutes from "./modules/Chat/chat.routes";
 import dotenv from "dotenv";
 import { initializeRedis } from "./config/redis";
+import { initializeAgents } from "./modules/LLM/agents";
 
 dotenv.config({ path: ".env.local" });
 
@@ -37,9 +38,15 @@ app.use("/api/users", UserRoutes);
 app.use("/api/chats", ChatRoutes);
 
 /* -------------------------------------------------------------------------- */
-/*                                 Listen Port                                */
+/*                                 Start Server                               */
 /* -------------------------------------------------------------------------- */
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  initializeRedis();
-});
+export const startSever = async () => {
+  await initializeRedis();
+  await initializeAgents();
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+  });
+};
+
+startSever();

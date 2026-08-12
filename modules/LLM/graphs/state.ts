@@ -1,6 +1,6 @@
 import { Annotation, MessagesAnnotation } from "@langchain/langgraph";
 
-export type AgentType = "chat" | "finance" | "email" | "utility";
+export type AgentType = "chat" | "email" | "utility" | "database";
 
 export const GraphState = Annotation.Root({
   ...MessagesAnnotation.spec,

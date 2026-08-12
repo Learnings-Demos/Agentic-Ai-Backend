@@ -30,7 +30,7 @@ export const emailGraphObject = new StateGraph(GraphState)
   .addEdge(START, "Generate-Email")
 
   .addConditionalEdges("Generate-Email", emailRoutingNode, {
-    email: "Email-Tool",
+    email_tool: "Email-Tool",
     end: END,
   })
 

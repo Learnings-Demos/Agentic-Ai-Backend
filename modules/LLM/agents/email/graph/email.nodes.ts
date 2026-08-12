@@ -1,18 +1,22 @@
-import { ToolMessage } from "@langchain/core/messages";
 import { GraphState } from "../../../graphs/state";
-import { emailAgent } from "../email.agent";
-import { emailTool } from "../../../tools/email/email.tool";
+import { getGmailMcpTools, gmailMCPToolsDescription } from "../email.agent";
 import {
   appendAiMessageToState,
   createToolMessageAndAppendToState,
 } from "../../../LLM.helpers";
+import { getAgent } from "../..";
+import { Agents } from "../../../../../utils/enums";
+import { withHITL } from "../../../tools/tools.policy";
 
 /* -------------------------------------------------------------------------- */
 /*                           Generate Email Node                              */
 /* -------------------------------------------------------------------------- */
 export const generateEmailNode = async (state: typeof GraphState.State) => {
+  const emailAgent = await getAgent(Agents.EMAIL);
+
   const result = await emailAgent.invoke({
     messages: state.messages,
+    gmailTools: gmailMCPToolsDescription,
   });
 
   return appendAiMessageToState(result);
@@ -32,8 +36,8 @@ export const emailRoutingNode = async (state: typeof GraphState.State) => {
     return "end";
   }
 
-  // Return tool name
-  return lastMessage?.tool_calls?.[0]?.name;
+  // Any Gmail MCP tool call routes to the same execution node
+  return "email_tool";
 };
 
 /* -------------------------------------------------------------------------- */
@@ -43,13 +47,21 @@ export const emailToolNode = async (state: typeof GraphState.State) => {
   /* Check if any tool are required */
   const lastMessage: any = state.messages.at(-1);
 
-  // Find email tool call
-  const toolCall = lastMessage.tool_calls?.find(
-    (tool: { name: string }) => tool.name === "email"
-  );
+  const toolCall = lastMessage.tool_calls?.[0];
 
-  // Execute calculator tool
-  const emailResult = await emailTool.invoke(toolCall.args);
+  if (!toolCall) {
+    return {};
+  }
+
+  // Find the matching Gmail MCP tool and execute it
+  const gmailToolsList = await getGmailMcpTools();
+  const gmailTool = gmailToolsList.find((tool) => tool.name === toolCall.name);
+
+  const emailService = withHITL(async (toolCall: any) => {
+    return await gmailTool?.invoke(toolCall.args);
+  });
+
+  const emailResult = await emailService(toolCall);
 
   // Create Tool Message to append in state
   return createToolMessageAndAppendToState({

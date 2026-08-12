@@ -14,3 +14,11 @@ export enum DatabaseServices {
   OTHER_SERVICE = "other_service",
   FORBIDDEN_SERVICE = "forbidden_service",
 }
+
+export enum MCPTools {
+  GMAIL = "gmail",
+}
+
+export enum Agents {
+  EMAIL = "email",
+}

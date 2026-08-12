@@ -200,7 +200,7 @@ export const chat = async (req: Request, res: Response) => {
     return SendResponse({
       res,
       status: HttpStatusCode.InternalServerError,
-      message: "Error: " + error.message,
+      message: "Error: " + error,
     });
   }
 };

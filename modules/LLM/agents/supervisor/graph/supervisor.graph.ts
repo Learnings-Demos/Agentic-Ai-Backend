@@ -5,7 +5,6 @@ import { GraphState } from "../../../graphs/state";
 import { visualizeGraph } from "../../../LLM.helpers";
 import { chatGraph } from "../../chat/graph/chat.graph";
 import { emailGraph } from "../../email/graph/email.graph";
-import { financeGraph } from "../../finance/graph/finance.graph";
 import { utilityGraph } from "../../utility/graph/utility.graph";
 import { supervisorNode, supervisorRouter } from "./supervisor.nodes";
 import { databaseGraph } from "../../database/graph/database.graph";
@@ -28,7 +27,6 @@ supervisorGraphObject
   .addNode("Chat-Agent", chatGraph)
   .addNode("Utility-Agent", utilityGraph)
   .addNode("Email-Agent", emailGraph)
-  .addNode("Finance-Agent", financeGraph)
   .addNode("Database-Agent", databaseGraph)
 
   /* -------------------------------------------------------------------------- */
@@ -40,14 +38,12 @@ supervisorGraphObject
     chat: "Chat-Agent",
     utility: "Utility-Agent",
     email: "Email-Agent",
-    finance: "Finance-Agent",
     database: "Database-Agent",
   })
 
   .addEdge("Chat-Agent", END)
   .addEdge("Utility-Agent", END)
   .addEdge("Email-Agent", END)
-  .addEdge("Finance-Agent", END)
   .addEdge("Database-Agent", END);
 
 export const supervisorGraph = supervisorGraphObject.compile({

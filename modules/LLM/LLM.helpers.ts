@@ -155,6 +155,31 @@ ${columns}`;
 };
 
 /* -------------------------------------------------------------------------- */
+/*                            MCP Tools Description                           */
+/* -------------------------------------------------------------------------- */
+export const buildMCPToolsDescription = (tools: any) => {
+  return tools
+    .map((tool: { name: string; description: string; schema: any }) => {
+      const properties = tool.schema?.properties ?? {};
+      const required: string[] = tool.schema?.required ?? [];
+
+      const fields = Object.entries(properties)
+        .map(([field, def]: [string, any]) => {
+          const type =
+            def.type === "array"
+              ? `${def.items?.type ?? "string"}[]`
+              : def.type;
+
+          return `${field}: ${type}${required.includes(field) ? " (required)" : ""}`;
+        })
+        .join(", ");
+
+      return `- ${tool.name}: ${tool.description}\n  Fields: ${fields}`;
+    })
+    .join("\n\n");
+};
+
+/* -------------------------------------------------------------------------- */
 /*                         Append Ai Message to State                         */
 /* -------------------------------------------------------------------------- */
 export const appendAiMessageToState = (result: AIMessage | AIMessageChunk) => {
