@@ -10,17 +10,6 @@ export const GraphState = Annotation.Root({
     default: () => null,
   }),
 
-  approval_required_payload: Annotation<{
-    title: string;
-    question: string;
-    options: string[];
-    metadata: Record<string, any>;
-  }>(),
-
-  generatedSqlQuery: Annotation<string>(),
-
-  humanApproved: Annotation<boolean>(),
-
   rag: Annotation<{
     currentQuery: string;
     context: string;
@@ -28,13 +17,28 @@ export const GraphState = Annotation.Root({
     rewrittenQuery: string;
     queryRewriteCount: number;
   }>({
-    reducer: (_, update) => update,
+    reducer: (current, update) => ({
+      ...current,
+      ...update,
+    }),
     default: () => ({
       currentQuery: "",
       context: "",
       answerReviewResult: "",
       rewrittenQuery: "",
       queryRewriteCount: 0,
+    }),
+  }),
+
+  database: Annotation<{
+    generatedSqlQuery: string;
+  }>({
+    reducer: (current, update) => ({
+      ...current,
+      ...update,
+    }),
+    default: () => ({
+      generatedSqlQuery: "",
     }),
   }),
 });

@@ -51,7 +51,9 @@ export const generateSqlQueryNode = async (state: typeof GraphState.State) => {
   });
 
   return {
-    generatedSqlQuery: sqlQuery.content,
+    database: {
+      generatedSqlQuery: sqlQuery.content,
+    },
   };
 };
 
@@ -62,7 +64,7 @@ export const executeSqlQueryNode = async (state: typeof GraphState.State) => {
   const toolCall = {
     name: "database",
     args: {
-      query: state.generatedSqlQuery,
+      query: state.database.generatedSqlQuery,
     },
   };
 
