@@ -7,6 +7,10 @@ import {
   validateHumanApproval,
 } from "./chat.validator";
 import { validateRequest } from "../../middlewares/validate";
+import multer from "multer";
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const app = express();
 
@@ -66,6 +70,15 @@ app.post(
   validateHumanApproval,
   validateRequest,
   ChatController.approveThread
+);
+
+/* -------------------------------------------------------------------------- */
+/*                               Upload Document                              */
+/* -------------------------------------------------------------------------- */
+app.post(
+  "/document/upload",
+  upload.single("doc"),
+  ChatController.uploadDocument
 );
 
 export default app;

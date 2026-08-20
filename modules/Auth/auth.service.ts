@@ -4,7 +4,7 @@ import {
   ComparePassword,
   generateToken,
   HashPassword,
-} from "../../utils/helpers";
+} from "../../src/utils/security.helpers";
 
 export const login = async (data: LoginRequest) => {
   const userInstance = await UsersModel.findOne({

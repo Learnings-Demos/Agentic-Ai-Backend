@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
-import { decodeToken, SendResponse } from "../utils/helpers";
+import { decodeToken } from "../src/utils/security.helpers";
+import { SendResponse } from "../src/utils/http.helpers";
 import { HttpStatusCode } from "axios";
 
 /* -------------------------------------------------------------------------- */

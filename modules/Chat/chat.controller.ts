@@ -2,12 +2,14 @@ import { HttpStatusCode } from "axios";
 import { Request, Response } from "express";
 import { HumanMessage } from "@langchain/core/messages";
 import { Command } from "@langchain/langgraph";
-import { generateUUID, SendResponse } from "../../utils/helpers";
-import { ThreadStatus } from "../../utils/enums";
+import { generateUUID } from "../../src/utils/security.helpers";
+import { SendResponse } from "../../src/utils/http.helpers";
+import { ThreadStatus } from "../../src/utils/enums";
 import * as ChatService from "./chat.service";
-import { checkpointer } from "../LLM/config/checkpointer";
-import { rootGraph } from "../LLM/graphs/graph";
-import { generateThreadTitle } from "../LLM/LLM.helpers";
+import { rootGraph } from "../../src/LLM/graphs/graph";
+import { generateThreadTitle } from "../../src/LLM/helpers/response.helpers";
+import { checkpointer } from "../../config/database/checkpointer";
+import { processDocument, SUPPORTED_MIME_TYPES } from "../../src/utils/RAG.helpers";
 
 /* -------------------------------------------------------------------------- */
 /*                                Get All Chats                               */
@@ -312,6 +314,46 @@ export const approveThread = async (req: any, res: Response) => {
       message: "Response Approved",
     });
   } catch (error: any) {
+    return SendResponse({
+      res,
+      status: HttpStatusCode.InternalServerError,
+      message: "Error: " + error.message,
+    });
+  }
+};
+
+/* -------------------------------------------------------------------------- */
+/*                           Upload Document in Chat                          */
+/* -------------------------------------------------------------------------- */
+export const uploadDocument = async (req: any, res: Response) => {
+  try {
+    if (!req.file) {
+      return SendResponse({
+        res,
+        status: HttpStatusCode.BadRequest,
+        message: "Document is required",
+      });
+    }
+
+    if (!(req.file.mimetype in SUPPORTED_MIME_TYPES)) {
+      return SendResponse({
+        res,
+        status: HttpStatusCode.BadRequest,
+        message: "Only PDF, DOC, and DOCX documents are allowed",
+      });
+    }
+
+    const result = await processDocument(req.file.buffer, req.file.mimetype);
+
+    return SendResponse({
+      res,
+      status: HttpStatusCode.Ok,
+      data: result,
+      message: "Document processed and stored successfully",
+    });
+  } catch (error: any) {
+    console.error("UploadDocument Error:", error);
+
     return SendResponse({
       res,
       status: HttpStatusCode.InternalServerError,

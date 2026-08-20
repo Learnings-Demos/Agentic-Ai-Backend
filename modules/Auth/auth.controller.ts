@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { HttpStatusCode } from "axios";
 import * as AuthService from "./auth.service";
-import { SendResponse } from "../../utils/helpers";
+import { SendResponse } from "../../src/utils/http.helpers";
 
 export const login = async (req: Request, res: Response) => {
   try {

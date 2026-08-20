@@ -1,4 +1,4 @@
-import { HashPassword } from "../../utils/helpers";
+import { HashPassword } from "../../src/utils/security.helpers";
 import { RegisterRequest } from "../Auth/auth.interface";
 import UsersModel from "./user.model";
 

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { HttpStatusCode } from "axios";
 import * as UserService from "./user.service";
-import { SendResponse } from "../../utils/helpers";
+import { SendResponse } from "../../src/utils/http.helpers";
 
 export const createUser = async (req: Request, res: Response) => {
   try {

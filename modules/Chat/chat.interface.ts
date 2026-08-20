@@ -1,4 +1,4 @@
-import { ThreadStatus } from "../../utils/enums";
+import { ThreadStatus } from "../../src/utils/enums";
 
 export interface CreateThreadRequest {
   thread_id: string;

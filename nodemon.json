@@ -1,0 +1,10 @@
+{
+    "watch": [
+        "."
+    ],
+    "ignore": [
+        "qdrant_storage/**",
+        "node_modules/**"
+    ],
+    "ext": "ts,js,json"
+}

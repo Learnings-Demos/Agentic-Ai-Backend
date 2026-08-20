@@ -11,3 +11,5 @@ package-lock.json
 .Backup/
 
 *.zip
+
+qdrant_storage/

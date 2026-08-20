@@ -1,4 +1,4 @@
-import { redisClient } from "../../../config/redis";
+import { redisClient } from "../../../config/database/redis";
 
 const REDIS_KEYS = {
   THREAD: "thread",
