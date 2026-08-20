@@ -47,8 +47,11 @@ export const ragNode = async (state: typeof GraphState.State) => {
 
   return {
     ...appendAiMessageToState(result),
-    ragContext: context,
-    currentQuery: lastMessage.content,
+    rag: {
+      ...state.rag,
+      context,
+      currentQuery: lastMessage.content,
+    },
   };
 };
 
@@ -59,8 +62,8 @@ export const reviewAnswerNode = async (state: typeof GraphState.State) => {
   const ragAnswer = state.messages.at(-1);
 
   const result = await ragAnswerReviewChain.invoke({
-    question: state.currentQuery,
-    context: state.ragContext,
+    question: state.rag.currentQuery,
+    context: state.rag.context,
     answer: ragAnswer?.content,
   });
 
@@ -73,14 +76,16 @@ export const reviewAnswerNode = async (state: typeof GraphState.State) => {
 /*                             Query Rewrite Node                             */
 /* -------------------------------------------------------------------------- */
 export const queryRewriteNode = async (state: typeof GraphState.State) => {
-  if (state.queryRewriteCount >= 2) {
+  if (state.rag.queryRewriteCount >= 2) {
     return new Command({
       update: {
-        currentQuery: "",
-        ragContext: "",
-        answerReviewResult: "",
-        rewrittenQuery: "",
-        queryRewriteCount: 0,
+        rag: {
+          currentQuery: "",
+          context: "",
+          answerReviewResult: "",
+          rewrittenQuery: "",
+          queryRewriteCount: 0,
+        },
       },
       goto: "END",
     });
@@ -89,17 +94,35 @@ export const queryRewriteNode = async (state: typeof GraphState.State) => {
   const previousAnswer = state.messages.at(-1);
 
   const result = await queryRewriteChain.invoke({
-    question: state?.currentQuery,
-    context: state.ragContext,
+    question: state.rag.currentQuery,
+    context: state.rag.context,
     previousAnswer: previousAnswer?.content,
   });
 
   return new Command({
     update: {
-      currentQuery: result.rewrittenQuery,
-      queryRewriteCount: state.queryRewriteCount + 1,
+      rag: {
+        ...state.rag,
+        currentQuery: result.rewrittenQuery,
+        queryRewriteCount: state.rag.queryRewriteCount + 1,
+      },
     },
     goto: "RAG-Model",
     graph: Command.PARENT,
   });
+};
+
+/* -------------------------------------------------------------------------- */
+/*                               Reset RAG State                              */
+/* -------------------------------------------------------------------------- */
+export const resetRagStateNode = async () => {
+  return {
+    rag: {
+      currentQuery: "",
+      context: "",
+      rewrittenQuery: "",
+      answerReviewResult: "",
+      queryRewriteCount: 0,
+    },
+  };
 };

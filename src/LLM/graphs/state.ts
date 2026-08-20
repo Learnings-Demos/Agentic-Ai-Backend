@@ -21,28 +21,20 @@ export const GraphState = Annotation.Root({
 
   humanApproved: Annotation<boolean>(),
 
-  currentQuery: Annotation<string>({
+  rag: Annotation<{
+    currentQuery: string;
+    context: string;
+    answerReviewResult: string;
+    rewrittenQuery: string;
+    queryRewriteCount: number;
+  }>({
     reducer: (_, update) => update,
-    default: () => "",
-  }),
-
-  ragContext: Annotation<string>({
-    reducer: (_, update) => update,
-    default: () => "",
-  }),
-
-  answerReviewResult: Annotation<string>({
-    reducer: (_, update) => update,
-    default: () => "",
-  }),
-
-  rewrittenQuery: Annotation<string>({
-    reducer: (_, update) => update,
-    default: () => "",
-  }),
-
-  queryRewriteCount: Annotation<number>({
-    reducer: (_, update) => update,
-    default: () => 0,
+    default: () => ({
+      currentQuery: "",
+      context: "",
+      answerReviewResult: "",
+      rewrittenQuery: "",
+      queryRewriteCount: 0,
+    }),
   }),
 });
