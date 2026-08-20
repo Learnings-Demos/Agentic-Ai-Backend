@@ -1,11 +1,11 @@
 import { tool } from "@langchain/core/tools";
 import { calculatorToolHandler } from "./calculator.handler";
 import { calculatorToolSchema } from "./calculator.schema";
-import { toolsDescription, toolsMapping } from "../tools.constants";
+import { toolDescriptions, toolNames } from "../tools.constants";
 
 const calculatorToolOptions = {
-  name: toolsMapping.calculator,
-  description: toolsDescription.calculator,
+  name: toolNames.calculator,
+  description: toolDescriptions.calculator,
   schema: calculatorToolSchema,
 };
 

@@ -1,10 +1,10 @@
-export const toolsMapping = {
+export const toolNames = {
   calculator: "calculator",
   weather: "weather",
   database: "database",
 };
 
-export const toolsDescription = {
+export const toolDescriptions = {
   calculator:
     "Use this tool to perform mathematical calculations such as addition, subtraction, multiplication, and division.",
   weather:

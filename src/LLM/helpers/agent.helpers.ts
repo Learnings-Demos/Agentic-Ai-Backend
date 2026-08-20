@@ -66,6 +66,15 @@ ${columns}`;
 };
 
 /* -------------------------------------------------------------------------- */
+/*                              Tools Description                             */
+/* -------------------------------------------------------------------------- */
+export const buildToolsDescription = (
+  tools: { name: string; description: string }[]
+) => {
+  return tools.map((tool) => `- ${tool.name}: ${tool.description}`).join("\n\n");
+};
+
+/* -------------------------------------------------------------------------- */
 /*                            MCP Tools Description                           */
 /* -------------------------------------------------------------------------- */
 export const buildMCPToolsDescription = (tools: any) => {

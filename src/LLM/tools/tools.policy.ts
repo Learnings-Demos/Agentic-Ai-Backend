@@ -1,21 +1,7 @@
 import { interrupt } from "@langchain/langgraph";
-import { toolsMapping } from "./tools.constants";
-import { getGmailToolsList } from "../agents/email/email.agent";
+import { toolNames } from "./tools.constants";
 
-export const approvalRequiredTools = new Set([toolsMapping.database]);
-
-/* -------------------------------------------------------------------------- */
-/*                                    Init                                    */
-/* -------------------------------------------------------------------------- */
-export const init = async () => {
-  // Add Gmail Tools to Set
-  const gmailTools = await getGmailToolsList();
-
-  gmailTools.forEach((toolName) => {
-    approvalRequiredTools.add(toolName);
-  });
-};
-init();
+export const approvalRequiredTools = new Set([toolNames.database]);
 
 /* -------------------------------------------------------------------------- */
 /*                               HITL Middleware                              */

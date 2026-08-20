@@ -1,11 +1,11 @@
 import { tool } from "@langchain/core/tools";
 import { weatherToolHandler } from "./weather.handler";
 import { weatherToolSchema } from "./weather.schema";
-import { toolsDescription, toolsMapping } from "../tools.constants";
+import { toolDescriptions, toolNames } from "../tools.constants";
 
 const weatherToolOptions = {
-  name: toolsMapping.weather,
-  description: toolsDescription.weather,
+  name: toolNames.weather,
+  description: toolDescriptions.weather,
   schema: weatherToolSchema,
 };
 

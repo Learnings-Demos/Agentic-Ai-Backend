@@ -10,6 +10,7 @@ import { rootGraph } from "../../src/LLM/graphs/graph";
 import { generateThreadTitle } from "../../src/LLM/helpers/response.helpers";
 import { checkpointer } from "../../config/database/checkpointer";
 import { processDocument, SUPPORTED_MIME_TYPES } from "../../src/utils/RAG.helpers";
+import { newSupervisorGraph } from "../../src/NEW_LLM/graphs/graph";
 
 /* -------------------------------------------------------------------------- */
 /*                                Get All Chats                               */
@@ -108,7 +109,7 @@ export const chat = async (req: Request, res: Response) => {
     }
 
     /* Invoke Graph */
-    const response: any = await rootGraph.invoke(
+    const response: any = await newSupervisorGraph.invoke(
       { messages: [new HumanMessage(query)] },
       {
         configurable: {
