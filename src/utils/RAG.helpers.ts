@@ -93,9 +93,7 @@ const generateDocumentEmbeddings = async (
 /*                          Generate Query Embeddings                         */
 /* -------------------------------------------------------------------------- */
 export const generateQueryEmbeddings = async (query: string) => {
-  const queryVector = await embeddingsModel.embedQuery(query);
-
-  return queryVector;
+  return await embeddingsModel.embedQuery(query);
 };
 
 /* -------------------------------------------------------------- */
@@ -130,7 +128,8 @@ const storeInQdrant = async (
 /*                     Main Document Processor                      */
 /* -------------------------------------------------------------- */
 export const processDocument = async (fileBuffer: Buffer, mimetype: string) => {
-  const type = SUPPORTED_MIME_TYPES[mimetype as keyof typeof SUPPORTED_MIME_TYPES];
+  const type =
+    SUPPORTED_MIME_TYPES[mimetype as keyof typeof SUPPORTED_MIME_TYPES];
 
   if (!type) {
     throw new Error(

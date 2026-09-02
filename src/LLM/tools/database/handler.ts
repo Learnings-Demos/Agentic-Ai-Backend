@@ -1,6 +1,6 @@
-import { DatabaseServices } from "../../../utils/enums";
 import { serviceRegistry } from "../../registries";
-import { DatabaseInput } from "./database.schema";
+import { DatabaseServices } from "../../../utils/enums";
+import { DatabaseInput } from "./schema";
 
 export const databaseToolHandler = async ({
   service,

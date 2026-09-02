@@ -1,5 +1,4 @@
 import { GraphState } from "../../../graphs/state";
-import { appendAiMessageToState } from "../../../helpers/graph.helpers";
 import { ragAgent } from "../RAG.agent";
 import {
   COLLECTION_NAME,
@@ -10,6 +9,11 @@ import * as QdrantService from "../../../../services/qdrant.service";
 import { ragAnswerReviewChain } from "../../../pipelines/rag-answer-review/rag-answer-review.chain";
 import { queryRewriteChain } from "../../../pipelines/query-rewrite/query-rewrite.chain";
 import { Command } from "@langchain/langgraph";
+import {
+  appendAiMessageToState,
+  createToolMessageAndAppendToState,
+} from "../../../helpers/graph.helpers";
+import { Tools } from "../../../../utils/enums";
 
 /* -------------------------------------------------------------------------- */
 /*                                  Rag Node                                  */
@@ -18,8 +22,11 @@ export const ragNode = async (state: typeof GraphState.State) => {
   /* Get Last Message */
   const lastMessage: any = state.messages.at(-1);
 
+  const query: string =
+    lastMessage?.tool_calls?.[0]?.args?.request || lastMessage?.content;
+
   /* Generate Query Embeddings */
-  const queryVectors = await generateQueryEmbeddings(lastMessage.content);
+  const queryVectors = await generateQueryEmbeddings(query);
 
   /* Search from Qudrant DB */
   const searchedResult = await QdrantService.searchData(
@@ -33,7 +40,7 @@ export const ragNode = async (state: typeof GraphState.State) => {
     .filter((text): text is string => Boolean(text));
 
   /* Re Rank Chunks */
-  const reRankedResult = await reRankChunks(lastMessage.content, allChunks);
+  const reRankedResult = await reRankChunks(query, allChunks);
 
   /* Prepare Context */
   const context = reRankedResult
@@ -42,7 +49,7 @@ export const ragNode = async (state: typeof GraphState.State) => {
 
   const result = await ragAgent.invoke({
     context,
-    question: lastMessage.content,
+    question: query,
   });
 
   return {
@@ -50,7 +57,8 @@ export const ragNode = async (state: typeof GraphState.State) => {
     rag: {
       ...state.rag,
       context,
-      currentQuery: lastMessage.content,
+      currentQuery: query,
+      tool_call_id: lastMessage?.tool_calls?.[0]?.id,
     },
   };
 };
@@ -73,6 +81,21 @@ export const reviewAnswerNode = async (state: typeof GraphState.State) => {
 };
 
 /* -------------------------------------------------------------------------- */
+/*                              Query Passed Node                             */
+/* -------------------------------------------------------------------------- */
+export const queryPassedNode = async (state: typeof GraphState.State) => {
+  const ragAnswer = state.messages.at(-1);
+
+  const toolMessage = {
+    content: ragAnswer?.content,
+    name: Tools.RAG,
+    tool_call_id: state.rag?.tool_call_id,
+  };
+
+  return createToolMessageAndAppendToState(toolMessage);
+};
+
+/* -------------------------------------------------------------------------- */
 /*                             Query Rewrite Node                             */
 /* -------------------------------------------------------------------------- */
 export const queryRewriteNode = async (state: typeof GraphState.State) => {
@@ -87,7 +110,7 @@ export const queryRewriteNode = async (state: typeof GraphState.State) => {
           queryRewriteCount: 0,
         },
       },
-      goto: "END",
+      goto: "Query-Passed",
     });
   }
 
@@ -108,7 +131,6 @@ export const queryRewriteNode = async (state: typeof GraphState.State) => {
       },
     },
     goto: "RAG-Model",
-    graph: Command.PARENT,
   });
 };
 

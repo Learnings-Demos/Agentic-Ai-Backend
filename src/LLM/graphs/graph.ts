@@ -1,9 +1,9 @@
 import { END, START, StateGraph } from "@langchain/langgraph";
+import path from "path";
 import { GraphState } from "./state";
 import { visualizeGraph } from "../helpers/graph.helpers";
-import path from "path";
-import { supervisorGraph } from "../agents/supervisor/graph/supervisor.graph";
 import { checkpointer } from "../../../config/database/checkpointer";
+import { supervisorGraph } from "../agents/supervisor/graph/supervisor.graph";
 
 export const rootGraphObject = new StateGraph(GraphState);
 

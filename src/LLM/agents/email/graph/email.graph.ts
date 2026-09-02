@@ -1,14 +1,16 @@
 import { END, START, StateGraph } from "@langchain/langgraph";
-import { GraphState } from "../../../graphs/state";
 import path from "path";
-import { generateFinalizeResponse } from "../../../helpers/response.helpers";
-import { visualizeGraph } from "../../../helpers/graph.helpers";
 import {
   emailRoutingNode,
   emailToolNode,
   generateEmailNode,
 } from "./email.nodes";
 import { checkpointer } from "../../../../../config/database/checkpointer";
+import { GraphState } from "../../../graphs/state";
+import {
+  redirectToPlannerNode,
+  visualizeGraph,
+} from "../../../helpers/graph.helpers";
 
 export const emailGraphObject = new StateGraph(GraphState)
   /* -------------------------------------------------------------------------- */
@@ -23,7 +25,7 @@ export const emailGraphObject = new StateGraph(GraphState)
     },
   })
   .addNode("Email-Tool", emailToolNode)
-  .addNode("Generate-Final-Response", generateFinalizeResponse)
+  .addNode("Go-To-Planner", redirectToPlannerNode)
 
   /* -------------------------------------------------------------------------- */
   /*                              Edges Defination                              */
@@ -35,7 +37,7 @@ export const emailGraphObject = new StateGraph(GraphState)
     end: END,
   })
 
-  .addEdge("Email-Tool", "Generate-Final-Response");
+  .addEdge("Email-Tool", "Go-To-Planner");
 
 export const emailGraph = emailGraphObject.compile({
   checkpointer: checkpointer,

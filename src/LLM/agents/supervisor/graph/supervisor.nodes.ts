@@ -1,28 +1,67 @@
+import { END } from "@langchain/langgraph";
+import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { GraphState } from "../../../graphs/state";
-import { withTrace } from "../../../helpers/graph.helpers";
-import { supervisorAgent } from "../supervisor.agent";
+import { appendAiMessageToState } from "../../../helpers/graph.helpers";
+import { supervisorAgent, supervisorAgentContext } from "../supervisor.agent";
+import { AIMessageChunk } from "@langchain/core/messages";
+import {
+  agentAvailableForTools,
+  safeTools,
+} from "../../../tools/tools.registry";
+import { Tools } from "../../../../utils/enums";
 
 /* -------------------------------------------------------------------------- */
 /*                               Supervisor Node                              */
 /* -------------------------------------------------------------------------- */
 export const supervisorNode = async (state: typeof GraphState.State) => {
-  const decision = await supervisorAgent.invoke({
+  const response = await supervisorAgent.invoke({
     messages: state.messages,
+    ...supervisorAgentContext, // Pass Tools Descriptions to Template
   });
 
-  return {
-    activeAgent: decision.agent,
-  };
+  return appendAiMessageToState(response as AIMessageChunk);
 };
 
-withTrace(supervisorNode, {
-  name: "Supervisor Node",
-});
+/* -------------------------------------------------------------------------- */
+/*                              Tool Executor Node                            */
+/* -------------------------------------------------------------------------- */
+export const toolExecutor = new ToolNode(safeTools); // Automatically adds ToolMessage to state
 
 /* -------------------------------------------------------------------------- */
 /*                 Supervisor Router ( Conditional Function )                 */
 /* -------------------------------------------------------------------------- */
-export const supervisorRouter = (state: typeof GraphState.State) => {
-  console.log('state.activeAgent = ', state.activeAgent)
-  return state.activeAgent as string;
+export const routeAfterSupervisor = (state: typeof GraphState.State) => {
+  const lastMessage = state.messages.at(-1);
+
+  if (!(lastMessage instanceof AIMessageChunk)) {
+    return END;
+  }
+
+  if (lastMessage?.tool_calls?.length) {
+    if (agentAvailableForTools.has(lastMessage.tool_calls[0].name as Tools)) {
+      return "use_agent";
+    }
+
+    return "safe_tool";
+  }
+
+  // No tool needed, so finish
+  return END;
+};
+
+/* -------------------------------------------------------------------------- */
+/*               Tool Identifier Router ( Conditional Function )              */
+/* -------------------------------------------------------------------------- */
+export const routerAfterTools = (state: typeof GraphState.State) => {
+  const lastMessage = state.messages.at(-1);
+
+  if (!(lastMessage instanceof AIMessageChunk)) {
+    return END;
+  }
+
+  if (!lastMessage?.tool_calls?.length) {
+    return END;
+  }
+
+  return lastMessage?.tool_calls[0].name;
 };

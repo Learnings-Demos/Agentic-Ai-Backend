@@ -1,12 +1,19 @@
-import { END, START, StateGraph } from "@langchain/langgraph";
+import { START, StateGraph } from "@langchain/langgraph";
 import path from "path";
-
-import { GraphState } from "../../../graphs/state";
-import { generateFinalizeResponse } from "../../../helpers/response.helpers";
-import { emptyNode, visualizeGraph } from "../../../helpers/graph.helpers";
-
-import { queryRewriteNode, ragNode, resetRagStateNode, reviewAnswerNode } from "./RAG.nodes";
+import {
+  queryPassedNode,
+  queryRewriteNode,
+  ragNode,
+  resetRagStateNode,
+  reviewAnswerNode,
+} from "./RAG.nodes";
 import { checkpointer } from "../../../../../config/database/checkpointer";
+import { GraphState } from "../../../graphs/state";
+import {
+  emptyNode,
+  redirectToPlannerNode,
+  visualizeGraph,
+} from "../../../helpers/graph.helpers";
 
 export const ragGraphObject = new StateGraph(GraphState)
 
@@ -24,7 +31,8 @@ export const ragGraphObject = new StateGraph(GraphState)
   })
   .addNode("Review-Answer", emptyNode)
   .addNode("Query-Rewrite", queryRewriteNode)
-  .addNode("Generate-Final-Response", generateFinalizeResponse)
+  .addNode("Query-Passed", queryPassedNode)
+  .addNode("Go-To-Planner", redirectToPlannerNode)
   .addNode("Reset-RAG-State", resetRagStateNode)
 
   /* -------------------------------------------------------------------------- */
@@ -35,12 +43,12 @@ export const ragGraphObject = new StateGraph(GraphState)
   .addEdge("RAG-Model", "Review-Answer")
 
   .addConditionalEdges("Review-Answer", reviewAnswerNode, {
-    PASS: "Reset-RAG-State",
+    PASS: "Query-Passed",
     REWRITE_QUERY: "Query-Rewrite",
   })
 
-  .addEdge("Reset-RAG-State", "Generate-Final-Response")
-  .addEdge("Generate-Final-Response", END);
+  .addEdge("Query-Passed", "Reset-RAG-State")
+  .addEdge("Reset-RAG-State", "Go-To-Planner");
 
 export const ragGraph = ragGraphObject.compile({
   checkpointer,

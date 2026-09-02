@@ -1,13 +1,18 @@
 import { Annotation, MessagesAnnotation } from "@langchain/langgraph";
 
-export type AgentType = "chat" | "email" | "utility" | "database" | "rag";
-
 export const GraphState = Annotation.Root({
   ...MessagesAnnotation.spec,
 
-  activeAgent: Annotation<AgentType | null>({
-    reducer: (_, update) => update,
-    default: () => null,
+  database: Annotation<{
+    generatedSqlQuery: string;
+  }>({
+    reducer: (current, update) => ({
+      ...current,
+      ...update,
+    }),
+    default: () => ({
+      generatedSqlQuery: "",
+    }),
   }),
 
   rag: Annotation<{
@@ -16,6 +21,7 @@ export const GraphState = Annotation.Root({
     answerReviewResult: string;
     rewrittenQuery: string;
     queryRewriteCount: number;
+    tool_call_id: string;
   }>({
     reducer: (current, update) => ({
       ...current,
@@ -27,18 +33,7 @@ export const GraphState = Annotation.Root({
       answerReviewResult: "",
       rewrittenQuery: "",
       queryRewriteCount: 0,
-    }),
-  }),
-
-  database: Annotation<{
-    generatedSqlQuery: string;
-  }>({
-    reducer: (current, update) => ({
-      ...current,
-      ...update,
-    }),
-    default: () => ({
-      generatedSqlQuery: "",
+      tool_call_id: "",
     }),
   }),
 });

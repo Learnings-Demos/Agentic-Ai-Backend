@@ -1,9 +1,7 @@
 import axios from "axios";
-import { WeatherToolInput } from "./weather.schema";
+import { WeatherToolInput } from "./schema";
 
-export const weatherToolHandler = async ({
-  query: city,
-}: WeatherToolInput) => {
+export const weatherToolHandler = async ({ query: city }: WeatherToolInput) => {
   // 1. Convert city → latitude/longitude
   const geoResponse = await axios.get(
     "https://geocoding-api.open-meteo.com/v1/search",

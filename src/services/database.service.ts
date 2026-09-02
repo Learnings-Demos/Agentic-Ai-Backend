@@ -1,4 +1,4 @@
-import sequelize from "../../../../config/database/database";
+import sequelize from "../../config/database/database";
 
 const forbiddenOperations = ["delete", "update", "insert", "drop", "alter"];
 
@@ -6,7 +6,11 @@ export const executeRawQuery = async (query: string) => {
   try {
     const queryLower = query.toLowerCase();
 
-    if (forbiddenOperations.some((word) => queryLower.includes(word))) {
+    const isForbidden = forbiddenOperations.some((word) => {
+      return new RegExp(`\\b${word}\\b`, "i").test(queryLower);
+    });
+
+    if (isForbidden) {
       throw new Error("This SQL operation is not allowed");
     }
 

@@ -3,7 +3,7 @@ import {
   buildServiceRegistryDescription,
   buildDatabaseSchemaDescription,
 } from "../../helpers/agent.helpers";
-import { databaseTool } from "../../tools/database/database.tool";
+import { databaseTool } from "../../tools/database/tool";
 import { databaseAgentTemplate } from "./database.template";
 
 const tools = [databaseTool];
@@ -17,5 +17,5 @@ export const databaseAgentContext = {
 };
 
 export const databaseAgent = databaseAgentTemplate.pipe(
-  groqModel.bindTools(tools)
+  groqModel.bindTools(tools) as any
 );

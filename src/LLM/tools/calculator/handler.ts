@@ -1,4 +1,4 @@
-import { CalculatorToolInput } from "./calculator.schema";
+import { CalculatorToolInput } from "./schema";
 
 export const calculatorToolHandler = async ({
   a,

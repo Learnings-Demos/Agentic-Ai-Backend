@@ -1,12 +1,12 @@
-import { GraphState } from "../../../graphs/state";
 import { getGmailMcpTools, gmailMCPToolsDescription } from "../email.agent";
+import { Agents, Tools } from "../../../../utils/enums";
+import { GraphState } from "../../../graphs/state";
+import { getAgent } from "../../../helpers/agent.helpers";
+import { withHITL } from "../../../tools/tools.registry";
 import {
   appendAiMessageToState,
   createToolMessageAndAppendToState,
 } from "../../../helpers/graph.helpers";
-import { getAgent } from "../..";
-import { Agents } from "../../../../utils/enums";
-import { withHITL } from "../../../tools/tools.policy";
 
 /* -------------------------------------------------------------------------- */
 /*                           Generate Email Node                              */
@@ -61,7 +61,7 @@ export const emailToolNode = async (state: typeof GraphState.State) => {
     return await gmailTool?.invoke(toolCall.args);
   });
 
-  const emailResult = await emailService(toolCall);
+  const emailResult = await emailService({ ...toolCall, name: Tools.EMAIL });
 
   // Create Tool Message to append in state
   return createToolMessageAndAppendToState({

@@ -1,5 +1,7 @@
 import qdrantClient from "../../config/llm/qdrant";
 
+const DOCUMENT_VECTOR_NAME = "content";
+
 /* -------------------------------------------------------------------------- */
 /*                         Creates a Qdrant collection                        */
 /* -------------------------------------------------------------------------- */
@@ -17,8 +19,10 @@ export const createCollection = async (
 
   const result = await qdrantClient.createCollection(collectionName, {
     vectors: {
-      size: vectorSize,
-      distance: "Cosine",
+      [DOCUMENT_VECTOR_NAME]: {
+        size: vectorSize,
+        distance: "Cosine",
+      },
     },
   });
 
@@ -45,7 +49,12 @@ export const storeData = async (
 ) => {
   const result = await qdrantClient.upsert(collectionName, {
     wait: true,
-    points,
+    points: points.map((point) => ({
+      ...point,
+      vector: {
+        [DOCUMENT_VECTOR_NAME]: point.vector,
+      },
+    })),
   });
 
   return result;
@@ -61,6 +70,7 @@ export const searchData = async (
 ) => {
   const results = await qdrantClient.query(collectionName, {
     query: vector,
+    using: DOCUMENT_VECTOR_NAME,
     limit,
     with_payload: true,
   });

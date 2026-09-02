@@ -1,19 +1,21 @@
-import { AIMessage, AIMessageChunk } from "@langchain/core/messages";
-import { GraphState } from "../../../graphs/state";
+import {
+  AIMessage,
+  AIMessageChunk,
+  ToolMessage,
+} from "@langchain/core/messages";
 import {
   databaseAgent,
   databaseAgentContext,
   databaseSchema,
 } from "../database.agent";
-import { databaseTool } from "../../../tools/database/database.tool";
-import { DatabaseServices } from "../../../../utils/enums";
-import { executeRawQuery } from "../../../tools/database/database.service";
+import { DatabaseServices, Tools } from "../../../../utils/enums";
+import { GraphState } from "../../../graphs/state";
+import { appendAiMessageToState } from "../../../helpers/graph.helpers";
 import { generateSqlQueryChain } from "../../../pipelines/generate-sql-query/generate-sql-query.chain";
-import {
-  appendAiMessageToState,
-  createToolMessageAndAppendToState,
-} from "../../../helpers/graph.helpers";
-import { withHITL } from "../../../tools/tools.policy";
+import { Command } from "@langchain/langgraph";
+import { databaseTool } from "../../../tools/database/tool";
+import { withHITL } from "../../../tools/tools.registry";
+import * as DatabaseService from "../../../../services/database.service";
 
 /* -------------------------------------------------------------------------- */
 /*                            Parse User Query Node                           */
@@ -24,7 +26,7 @@ export const parseUserQueryNode = async (state: typeof GraphState.State) => {
     ...databaseAgentContext,
   });
 
-  return appendAiMessageToState(result);
+  return appendAiMessageToState(result as AIMessageChunk);
 };
 
 /* -------------------------------------------------------------------------- */
@@ -38,7 +40,7 @@ export const generateSqlQueryNode = async (state: typeof GraphState.State) => {
   }
 
   const toolCall = lastMessage.tool_calls?.find(
-    (tool) => tool.name === "database"
+    (tool) => tool.name === Tools.DATABASE
   );
 
   if (!toolCall) {
@@ -53,6 +55,7 @@ export const generateSqlQueryNode = async (state: typeof GraphState.State) => {
   return {
     database: {
       generatedSqlQuery: sqlQuery.content,
+      toolCallId: toolCall.id,
     },
   };
 };
@@ -60,24 +63,33 @@ export const generateSqlQueryNode = async (state: typeof GraphState.State) => {
 /* -------------------------------------------------------------------------- */
 /*                           Execute Sql Query Node                           */
 /* -------------------------------------------------------------------------- */
-export const executeSqlQueryNode = async (state: typeof GraphState.State) => {
+export const executeSqlQueryNode = async (state: any) => {
   const toolCall = {
-    name: "database",
+    name: Tools.DATABASE,
     args: {
       query: state.database.generatedSqlQuery,
     },
   };
 
   const executeSQLQuery = withHITL(async (toolCall: any) => {
-    return await executeRawQuery(toolCall.args.query);
+    return await DatabaseService.executeRawQuery(toolCall.args.query);
   });
 
   const result = await executeSQLQuery(toolCall);
 
-  return createToolMessageAndAppendToState({
-    tool_call_id: "generate_sql",
-    name: "database",
-    content: typeof result === "string" ? result : JSON.stringify(result),
+  const toolMessage = new ToolMessage({
+    content:
+      typeof result === "object" ? JSON.stringify(result) : String(result),
+    tool_call_id: state.database.toolCallId,
+    name: toolCall.name,
+  });
+
+  return new Command({
+    update: {
+      messages: [toolMessage],
+    },
+    goto: "Supervisor",
+    graph: Command.PARENT,
   });
 };
 
@@ -94,7 +106,7 @@ export const executeServiceNode = async (state: typeof GraphState.State) => {
 
   // Find database tool call
   const toolCall = lastMessage.tool_calls?.find(
-    (tool) => tool.name === "database"
+    (tool) => tool.name === Tools.DATABASE
   );
 
   if (!toolCall) {
@@ -108,12 +120,21 @@ export const executeServiceNode = async (state: typeof GraphState.State) => {
 
   const result = await executeDatabaseService(toolCall);
 
-  // Create Tool Message to append in state
-  return createToolMessageAndAppendToState({
+  const toolMessage = new ToolMessage({
     content:
       typeof result === "object" ? JSON.stringify(result) : String(result),
-    tool_call_id: toolCall.id!,
+    tool_call_id: toolCall?.id!,
     name: toolCall.name,
+  });
+
+  return new Command({
+    update: {
+      messages: [toolMessage],
+    },
+
+    goto: "Supervisor",
+
+    graph: Command.PARENT,
   });
 };
 
@@ -149,13 +170,13 @@ export const queryServiceDecisionRouter = async (
   }
 
   // Check if it is database tool
-  const databaseTool = tool_calls.find((i) => i.name === "database");
+  const databaseTool = tool_calls.find((i) => i.name === Tools.DATABASE);
 
   if (!databaseTool) {
     return "end";
   }
 
-  // Check service in tool args
+  // Check service & operation that needs to be performed
   const service = databaseTool?.args?.service;
   const operation = databaseTool?.args?.operation;
 

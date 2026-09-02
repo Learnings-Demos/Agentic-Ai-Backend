@@ -8,11 +8,3 @@ export const serviceRegistry = {
 };
 
 export const databaseModels = [UsersModel, InvoicesModel];
-
-export const allOperations: any = [
-  ...Object.values(serviceRegistry).reduce((acc, registry) => {
-    return [...acc, ...Object.keys(registry.operations)];
-  }, [] as string[]),
-  "generate_sql",
-  "forbidden_operation",
-];

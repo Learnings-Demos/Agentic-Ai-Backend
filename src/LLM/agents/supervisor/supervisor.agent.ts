@@ -1,7 +1,12 @@
 import { groqModel } from "../../../../config/llm/models";
-import { supervisorDecisionSchema } from "./supervisor.schema";
+import { buildToolsDescription } from "../../helpers/agent.helpers";
+import { supervisorTools } from "../../tools/tools.registry";
 import { supervisorTemplate } from "./supervisor.template";
 
+export const supervisorAgentContext = {
+  toolDescriptions: buildToolsDescription(supervisorTools),
+};
+
 export const supervisorAgent = supervisorTemplate.pipe(
-  groqModel.withStructuredOutput(supervisorDecisionSchema)
+  groqModel.bindTools(supervisorTools) as any
 );

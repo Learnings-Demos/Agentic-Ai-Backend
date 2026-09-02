@@ -1,5 +1,6 @@
 import { databaseModels, serviceRegistry } from "../registries";
-import { DatabaseServices } from "../../utils/enums";
+import { Agents, DatabaseServices } from "../../utils/enums";
+import { availableAgents } from "../agents/init";
 
 /* -------------------------------------------------------------------------- */
 /*                Service Registries Description For Tempelate                */
@@ -71,7 +72,9 @@ ${columns}`;
 export const buildToolsDescription = (
   tools: { name: string; description: string }[]
 ) => {
-  return tools.map((tool) => `- ${tool.name}: ${tool.description}`).join("\n\n");
+  return tools
+    .map((tool) => `- ${tool.name}: ${tool.description}`)
+    .join("\n\n");
 };
 
 /* -------------------------------------------------------------------------- */
@@ -97,4 +100,11 @@ export const buildMCPToolsDescription = (tools: any) => {
       return `- ${tool.name}: ${tool.description}\n  Fields: ${fields}`;
     })
     .join("\n\n");
+};
+
+/* -------------------------------------------------------------------------- */
+/*                                  Get Agent                                 */
+/* -------------------------------------------------------------------------- */
+export const getAgent = (agentName: Agents) => {
+  return availableAgents[agentName];
 };

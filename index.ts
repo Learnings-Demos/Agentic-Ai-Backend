@@ -6,7 +6,7 @@ import UserRoutes from "./modules/User/user.routes";
 import ChatRoutes from "./modules/Chat/chat.routes";
 import dotenv from "dotenv";
 import { initializeRedis } from "./config/database/redis";
-import { initializeAgents } from "./src/LLM/agents";
+import { initializeAgents } from "./src/LLM/agents/init";
 
 dotenv.config({ path: ".env.local" });
 

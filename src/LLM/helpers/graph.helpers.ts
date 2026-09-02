@@ -6,6 +6,8 @@ import {
   AIMessageChunk,
   ToolMessage,
 } from "@langchain/core/messages";
+import { GraphState } from "../graphs/state";
+import { Command } from "@langchain/langgraph";
 
 /* -------------------------------------------------------------------------- */
 /*                                 Empty Node                                 */
@@ -77,4 +79,19 @@ export const createToolMessageAndAppendToState = (params: any) => {
   return {
     messages: [toolMessage],
   };
+};
+
+/* -------------------------------------------------------------------------- */
+/*                             Redirect to Planner                            */
+/* -------------------------------------------------------------------------- */
+export const redirectToPlannerNode = async (
+  state: typeof GraphState.State
+) => {
+  return new Command({
+    update: {
+      messages: state.messages,
+    },
+    goto: "Supervisor",
+    graph: Command.PARENT,
+  });
 };

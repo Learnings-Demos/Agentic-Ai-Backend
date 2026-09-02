@@ -1,8 +1,5 @@
 import { END, START, StateGraph } from "@langchain/langgraph";
-import { GraphState } from "../../../graphs/state";
 import path from "path";
-import { generateFinalizeResponse } from "../../../helpers/response.helpers";
-import { visualizeGraph } from "../../../helpers/graph.helpers";
 import {
   executeServiceNode,
   executeSqlQueryNode,
@@ -12,6 +9,11 @@ import {
   queryServiceDecisionRouter,
 } from "./database.nodes";
 import { checkpointer } from "../../../../../config/database/checkpointer";
+import { GraphState } from "../../../graphs/state";
+import {
+  redirectToPlannerNode,
+  visualizeGraph,
+} from "../../../helpers/graph.helpers";
 
 export const databaseGraphObject = new StateGraph(GraphState)
 
@@ -27,12 +29,11 @@ export const databaseGraphObject = new StateGraph(GraphState)
       maxInterval: 2000,
     },
   })
-
   .addNode("Generate-SQL", generateSqlQueryNode)
   .addNode("Execute-SQL", executeSqlQueryNode)
   .addNode("Execute-Service", executeServiceNode)
-  .addNode("Generate-Final-Response", generateFinalizeResponse)
   .addNode("Handle-Forbidden-Operation", handleForbiddenNode)
+  .addNode("Go-To-Planner", redirectToPlannerNode)
 
   /* -------------------------------------------------------------------------- */
   /*                              Edges Definition                              */
@@ -49,13 +50,11 @@ export const databaseGraphObject = new StateGraph(GraphState)
 
   .addEdge("Generate-SQL", "Execute-SQL")
 
-  .addEdge("Execute-SQL", "Generate-Final-Response")
+  .addEdge("Execute-SQL", "Go-To-Planner")
 
-  .addEdge("Execute-Service", "Generate-Final-Response")
+  .addEdge("Execute-Service", "Go-To-Planner")
 
-  .addEdge("Handle-Forbidden-Operation", END)
-
-  .addEdge("Generate-Final-Response", END);
+  .addEdge("Handle-Forbidden-Operation", "Go-To-Planner");
 
 export const databaseGraph = databaseGraphObject.compile({
   checkpointer: checkpointer,

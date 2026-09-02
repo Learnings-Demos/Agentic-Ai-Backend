@@ -21,4 +21,14 @@ export enum MCPTools {
 
 export enum Agents {
   EMAIL = "email",
+  DATABASE = "database",
+}
+
+
+export enum Tools {
+  RAG = "rag",
+  DATABASE = "database",
+  WEATHER = "weather",
+  CALCULATOR = "calculator",
+  EMAIL = "email",
 }

@@ -1,13 +1,16 @@
 import { Agents } from "../../utils/enums";
 import { createEmailAgent } from "./email/email.agent";
 
-let agents: any = {};
+export let availableAgents: any = {};
 
+/* -------------------------------------------------------------------------- */
+/*                              Initialize Agent                              */
+/* -------------------------------------------------------------------------- */
 export const initializeAgents = async () => {
   try {
     const emailAgent = await createEmailAgent();
 
-    agents = {
+    availableAgents = {
       [Agents.EMAIL]: emailAgent,
     };
 
@@ -17,8 +20,4 @@ export const initializeAgents = async () => {
 
     throw error;
   }
-};
-
-export const getAgent = (agentName: Agents) => {
-  return agents[agentName];
 };

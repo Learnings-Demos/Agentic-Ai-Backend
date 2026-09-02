@@ -46,6 +46,19 @@ Rules:
 - Do not judge whether the generated answer sounds reasonable.
 - Judge only whether the DOCUMENT CONTEXT supports answering the question.
 
+Output rules:
+- If relevant = true, return:
+  {{ "relevant": true, "reason": null }}
+
+- If relevant = false, return:
+  {{
+    "relevant": false,
+    "reason": "Brief explanation of why the document context is insufficient."
+  }}
+
+- Do NOT include a "reason" field when relevant = true.
+- The reason must be based only on the retrieved document context.
+
 Example:
 
 Question:
@@ -59,10 +72,10 @@ Answer:
 "The resume does not mention Kishan's salary."
 
 Result:
-relevant = false
-
-Reason:
-"The retrieved context contains employment information but no salary information."
+{{
+  "relevant": false,
+  "reason": "The retrieved context contains employment information but no salary information."
+}}
 
 Question:
 "Where did Kishan work as a Senior Software Engineer?"
@@ -75,10 +88,10 @@ Answer:
 "Kishan worked at Technostacks Infotech."
 
 Result:
-relevant = true
-
-Reason:
-"The context explicitly states that Kishan worked as a Senior Software Engineer at Technostacks Infotech."
+{{
+  "relevant": true,
+  "reason": null
+}}
 
 Question:
 {question}
