@@ -16,13 +16,14 @@ import { Command } from "@langchain/langgraph";
 import { databaseTool } from "../../../tools/database/tool";
 import { withHITL } from "../../../tools/tools.registry";
 import * as DatabaseService from "../../../../services/database.service";
+import { encodeToon } from "../../../helpers/token.helpers";
 
 /* -------------------------------------------------------------------------- */
 /*                            Parse User Query Node                           */
 /* -------------------------------------------------------------------------- */
 export const parseUserQueryNode = async (state: typeof GraphState.State) => {
   const result = await databaseAgent.invoke({
-    messages: state.messages,
+    messages: encodeToon(state.messages),
     ...databaseAgentContext,
   });
 

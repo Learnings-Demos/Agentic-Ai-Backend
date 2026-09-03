@@ -9,13 +9,14 @@ import {
   safeTools,
 } from "../../../tools/tools.registry";
 import { Tools } from "../../../../utils/enums";
+import { encodeToon } from "../../../helpers/token.helpers";
 
 /* -------------------------------------------------------------------------- */
 /*                               Supervisor Node                              */
 /* -------------------------------------------------------------------------- */
 export const supervisorNode = async (state: typeof GraphState.State) => {
   const response = await supervisorAgent.invoke({
-    messages: state.messages,
+    messages: encodeToon(state.messages),
     ...supervisorAgentContext, // Pass Tools Descriptions to Template
   });
 

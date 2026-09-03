@@ -14,6 +14,7 @@ import {
   createToolMessageAndAppendToState,
 } from "../../../helpers/graph.helpers";
 import { Tools } from "../../../../utils/enums";
+import { encodeToon } from "../../../helpers/token.helpers";
 
 /* -------------------------------------------------------------------------- */
 /*                                  Rag Node                                  */
@@ -48,7 +49,7 @@ export const ragNode = async (state: typeof GraphState.State) => {
     .join("\n\n");
 
   const result = await ragAgent.invoke({
-    context,
+    context: encodeToon(context),
     question: query,
   });
 

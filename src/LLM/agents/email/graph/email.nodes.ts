@@ -7,6 +7,7 @@ import {
   appendAiMessageToState,
   createToolMessageAndAppendToState,
 } from "../../../helpers/graph.helpers";
+import { encodeToon } from "../../../helpers/token.helpers";
 
 /* -------------------------------------------------------------------------- */
 /*                           Generate Email Node                              */
@@ -15,7 +16,7 @@ export const generateEmailNode = async (state: typeof GraphState.State) => {
   const emailAgent = await getAgent(Agents.EMAIL);
 
   const result = await emailAgent.invoke({
-    messages: state.messages,
+    messages: encodeToon(state.messages),
     gmailTools: gmailMCPToolsDescription,
   });
 
