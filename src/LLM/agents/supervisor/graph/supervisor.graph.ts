@@ -1,10 +1,7 @@
 import { END, START, StateGraph } from "@langchain/langgraph";
 import path from "path";
 import { GraphState } from "../../../graphs/state";
-import {
-  emptyNode,
-  visualizeGraph,
-} from "../../../helpers/graph.helpers";
+import { emptyNode, visualizeGraph } from "../../../helpers/graph.helpers";
 import { checkpointer } from "../../../../../config/database/checkpointer";
 import {
   routeAfterSupervisor,
@@ -15,6 +12,7 @@ import {
 import { databaseGraph } from "../../database/graph/database.graph";
 import { emailGraph } from "../../email/graph/email.graph";
 import { ragGraph } from "../../RAG/graph/RAG.graph";
+import { manageConversationMemory } from "../../../helpers/memory.helpers";
 
 export const supervisorGraphObject = new StateGraph(GraphState)
 
@@ -22,6 +20,7 @@ export const supervisorGraphObject = new StateGraph(GraphState)
   /*                              Nodes Defination                              */
   /* -------------------------------------------------------------------------- */
 
+  .addNode("Manage-Conversation-Memory", manageConversationMemory)
   .addNode("Supervisor", supervisorNode)
   .addNode("Database-Agent", databaseGraph)
   .addNode("Email-Agent", emailGraph)
@@ -33,7 +32,9 @@ export const supervisorGraphObject = new StateGraph(GraphState)
   /*                              Edges Defination                              */
   /* -------------------------------------------------------------------------- */
 
-  .addEdge(START, "Supervisor")
+  .addEdge(START, "Manage-Conversation-Memory")
+
+  .addEdge("Manage-Conversation-Memory", "Supervisor")
 
   .addConditionalEdges("Supervisor", routeAfterSupervisor, {
     use_agent: "Agent-Router",
@@ -47,7 +48,7 @@ export const supervisorGraphObject = new StateGraph(GraphState)
     rag: "RAG-Agent",
   })
 
-  .addEdge("Safe-Tool-Executor", "Supervisor");
+  .addEdge("Safe-Tool-Executor", "Manage-Conversation-Memory");
 
 /* -------------------------------------------------------------------------- */
 /*                                Compile Graph                               */

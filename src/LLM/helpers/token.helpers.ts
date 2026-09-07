@@ -4,25 +4,70 @@ import { decode, encode } from "@toon-format/toon";
 /*                                Encode Toon                                 */
 /* -------------------------------------------------------------------------- */
 export const encodeToon = (data: any) => {
-  return encode(data);
+  return encode(normalizeMessages(data));
 };
 
 /* -------------------------------------------------------------------------- */
-/*                                Decode Toon                                 */
+/*                          Normalize State Messages                          */
 /* -------------------------------------------------------------------------- */
-export const decodeToon = (data: any) => {
-  return decode(data);
-};
+export const normalizeMessages = (messages: any) => {
+  function getRole(msg: any) {
+    if (msg._getType) return msg._getType(); // Standard LangChain method
+    if (msg.constructor && msg.constructor.name) {
+      const name = msg.constructor.name.replace(/(Chunk|Message)$/i, "");
+      return name.toLowerCase(); // 'HumanMessage' -> 'human', 'AIMessageChunk' -> 'ai'
+    }
+    return msg.role || "unknown";
+  }
 
-console.log(encodeToon([
-  "The quick brown fox jumps over the lazy dog while the sun sets behind the mountains casting golden hues",
-  "Artificial intelligence is transforming the way we live and work by automating repetitive tasks and enhancing human creativity",
-  "In a world full of endless possibilities the only limit is your imagination and the courage to pursue your dreams",
-  "React is a powerful JavaScript library for building user interfaces that are fast interactive and highly maintainable",
-  "The ocean waves crashed against the rocky shore as seagulls soared overhead searching for their evening meal along the coastline",
-  "TypeScript brings static typing to JavaScript helping developers catch errors early and write more robust scalable applications",
-  "Every morning the city comes alive with the sounds of traffic people rushing to work and coffee shops opening their doors",
-  "Machine learning models require large amounts of clean labeled data to train effectively and produce accurate reliable predictions",
-  "The ancient library held thousands of manuscripts each containing wisdom passed down through generations of scholars and philosophers",
-  "Node.js enables server-side JavaScript execution allowing developers to build fast scalable network applications with ease"
-]))
+  // Helper to recursively strip empty objects, arrays, and null/undefined values
+  function clean(obj: any) {
+    if (obj === null || obj === undefined) return undefined;
+
+    if (Array.isArray(obj)) {
+      const cleanedArray: any = obj
+        .map(clean)
+        .filter((item) => item !== undefined);
+      return cleanedArray.length > 0 ? cleanedArray : undefined;
+    }
+
+    if (typeof obj === "object") {
+      const cleanedObj: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        const cleanedValue = clean(value);
+        if (cleanedValue !== undefined) {
+          // Keep non-empty objects
+          if (
+            typeof cleanedValue === "object" &&
+            !Array.isArray(cleanedValue) &&
+            Object.keys(cleanedValue).length === 0
+          ) {
+            continue;
+          }
+          cleanedObj[key] = cleanedValue;
+        }
+      }
+      return Object.keys(cleanedObj).length > 0 ? cleanedObj : undefined;
+    }
+
+    return obj;
+  }
+
+  // Process array of messages
+  return messages.map((msg: any) => {
+    // Convert class instance to plain object
+    const plainMsg = {
+      id: msg.id,
+      role: getRole(msg),
+      content: msg.content,
+      additional_kwargs: msg.additional_kwargs,
+      response_metadata: msg.response_metadata,
+      tool_calls: msg.tool_calls,
+      tool_call_chunks: msg.tool_call_chunks,
+      invalid_tool_calls: msg.invalid_tool_calls,
+      ...msg, // Capture any extra properties
+    };
+
+    return clean(plainMsg) || {};
+  });
+};

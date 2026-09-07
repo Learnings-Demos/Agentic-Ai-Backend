@@ -50,10 +50,6 @@ export const databaseGraphObject = new StateGraph(GraphState)
 
   .addEdge("Generate-SQL", "Execute-SQL")
 
-  .addEdge("Execute-SQL", "Go-To-Planner")
-
-  .addEdge("Execute-Service", "Go-To-Planner")
-
   .addEdge("Handle-Forbidden-Operation", "Go-To-Planner");
 
 export const databaseGraph = databaseGraphObject.compile({

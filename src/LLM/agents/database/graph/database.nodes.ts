@@ -89,7 +89,7 @@ export const executeSqlQueryNode = async (state: any) => {
     update: {
       messages: [toolMessage],
     },
-    goto: "Supervisor",
+    goto: "Manage-Conversation-Memory",
     graph: Command.PARENT,
   });
 };
@@ -133,8 +133,7 @@ export const executeServiceNode = async (state: typeof GraphState.State) => {
       messages: [toolMessage],
     },
 
-    goto: "Supervisor",
-
+    goto: "Manage-Conversation-Memory",
     graph: Command.PARENT,
   });
 };

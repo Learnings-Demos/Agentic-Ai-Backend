@@ -24,33 +24,6 @@ Rules:
 - Never mention tool calls, internal execution, or implementation details.
 - If multiple ToolMessages exist, combine them into a single coherent response.
 
-Email Tool Responses:
-If an email was sent successfully, your response MUST include:
-- A confirmation that the email was sent.
-- Recipient email address.
-- Subject.
-- Complete email body exactly as it was sent.
-
-Do NOT summarize or omit the email body.
-
-Example format:
-
-The email has been sent successfully.
-
-Recipient:
-john@example.com
-
-Subject:
-Suspension Notice
-
-Body:
-Dear John,
-
-This is to inform you...
-
-Regards,
-ABC Company
-
 For all other tool responses, respond naturally using the available ToolMessages.
 `,
     ],

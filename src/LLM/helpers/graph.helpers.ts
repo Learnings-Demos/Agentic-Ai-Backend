@@ -91,7 +91,7 @@ export const redirectToPlannerNode = async (
     update: {
       messages: state.messages,
     },
-    goto: "Supervisor",
+    goto: "Manage-Conversation-Memory",
     graph: Command.PARENT,
   });
 };

@@ -17,6 +17,7 @@ import { encodeToon } from "../../../helpers/token.helpers";
 export const supervisorNode = async (state: typeof GraphState.State) => {
   const response = await supervisorAgent.invoke({
     messages: encodeToon(state.messages),
+    summary: state.summary,
     ...supervisorAgentContext, // Pass Tools Descriptions to Template
   });
 
