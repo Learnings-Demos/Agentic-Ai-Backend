@@ -1,0 +1,50 @@
+services:
+  ######### Backend App #########
+  agent-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env.local
+    volumes:
+      - .:/app
+      - ${HOME}/.gmail-mcp:/root/.gmail-mcp
+    depends_on:
+      - postgres
+      - redis
+
+  ######### Postgres service for database #########
+  postgres:
+    image: postgres:18-alpine
+    container_name: postgres
+    env_file:
+      - .env.local
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+
+  ######### Redis service for database #########
+  redis:
+    image: redis:8.6.2-alpine
+    container_name: redis
+    env_file:
+      - .env.local
+    ports:
+      - "6379:6379"
+
+  ######### Qdrant service for Vector Database #########
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+volumes:
+  pgdata:
+  qdrant_data:
